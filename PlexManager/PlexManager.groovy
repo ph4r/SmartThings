@@ -2,6 +2,7 @@
  *  Plex Manager
  *
  *  Copyright 2016 iBeech
+ *  Modified by Ph4r
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -315,45 +316,50 @@ def switchChange(evt) {
     // Parse out the new switch state from the event data
     def command = getPHTCommand(evt.value);
     
+    // Parse out the PHT clientIdentifier from the event data
+    def phtID = getPHTIdentifier(evt.value);
+    
     //log.debug "phtIP: " + phtIP
     log.debug "Command: $command"
     
     switch(command) {
     	case "next":
         	log.debug "Sending command 'next' to $phtIP"
-            next(phtIP);
+            next(phtID);
         break;
         
         case "previous":
         	log.debug "Sending command 'previous' to $phtIP"
-            previous(phtIP);
+            previous(phtID);
         break;
         
         case "play":
+        	play(phtID);
+        break;
+        
         case "pause":
-        	// Toggle the play / pause button for this PHT
-        	playpause(phtIP);
-        	break;
+        	pauseplayback(phtID);
+        break;
             
         case "stop":            
-    		stop(phtIP);
+    		stop(phtID);
         break;
         
         case "scanNewClients":
         	getClients();
             
         case "setVolume":
-        	setVolume(phtIP, getPHTAttribute(evt.value));
+        	setVolume(phtID, getPHTAttribute(evt.value));
         break;
     }
     
     return;
 }
 
-def setVolume(phtIP, level) {
+def setVolume(phtID, level) {
 	log.debug "Executing 'setVolume'"
 	
-	executeRequest("/system/players/$phtIP/playback/setParameters?volume=$level", "GET");
+	executeClientRequest("/player/playback/setParameters?volume=$level", phtID, "GET");
 }
 
 def regularPolling() { 
@@ -375,28 +381,61 @@ def updateClientStatus(){
 	executeRequest("/status/sessions", "GET")
 }
 
-def playpause(phtIP) {
-	log.debug "Executing 'playpause'"
+def play(phtID) {
+	log.debug "Executing 'play'"
 	
-	executeRequest("/system/players/" + phtIP + "/playback/play", "GET");
+	executeClientRequest("/player/playback/play", phtID , "GET");
 }
 
-def stop(phtIP) {
+def pauseplayback(phtID) {
+	log.debug "Executing 'pause'"
+	
+	executeClientRequest("/player/playback/pause", phtID , "GET");
+}
+
+def stop(phtID) {
 	log.debug "Executing 'stop'"
 	
-	executeRequest("/system/players/" + phtIP + "/playback/stop", "GET");
+	executeClientRequest("/player/playback/stop", phtID , "GET");
 }
 
-def next(phtIP) {
+def next(phtID) {
 	log.debug "Executing 'next'"
 	
-	executeRequest("/system/players/" + phtIP + "/playback/skipNext", "GET");
+	executeClientRequest("/player/playback/skipNext", phtID , "GET");
 }
 
-def previous(phtIP) {
+def previous(phtID) {
 	log.debug "Executing 'next'"
 	
-	executeRequest("/system/players/" + phtIP + "/playback/skipPrevious", "GET");
+	executeClientRequest("/player/playback/skipPrevious", phtID , "GET");
+}
+
+def executeClientRequest(Path, phtID, method) {
+		   
+	log.debug "The " + method + " path is: " + Path;
+     
+    // We don't have an authentication token
+    if(!state.authenticationToken) {
+    	getAuthenticationToken()
+    }
+	    
+	def headers = [:] 
+	headers.put("HOST", "$settings.plexServerIP:32400")
+    headers.put("X-Plex-Token", state.authenticationToken)
+    headers.put("X-Plex-Target-Client-Identifier", phtID)
+	
+	try {    
+		def actualAction = new physicalgraph.device.HubAction(
+		    method: method,
+		    path: Path,
+		    headers: headers)
+		
+		sendHubCommand(actualAction)        
+	}
+	catch (Exception e) {
+		log.debug "Hit Exception $e on $hubAction"
+	}
 }
 
 def executeRequest(Path, method) {
