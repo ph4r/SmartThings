@@ -1,7 +1,8 @@
 /**
- *  Pi Relay Control
+ *  Plex Home Theatre
  *
  *  Copyright 2016 Tom Beech
+ *  Modified by Ph4r
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -34,7 +35,17 @@ metadata {
         command "setPlaybackIcon", ["string"]
         command "setPlaybackTitle", ["string"]
         command "setVolumeLevel", ["number"]        
-	command "playbackType", ["string"]
+		command "playbackType", ["string"]
+		command "stepBack"
+		command "stepForward"
+		command "home"
+		command "moveUp"
+		command "music"
+		command "moveLeft"
+		command "select"
+		command "moveRight"
+		command "back"
+		command "moveDown"
 	}
 
 	simulator {
@@ -58,30 +69,65 @@ metadata {
             }
         }
         
-        standardTile("previous", "device.status", width: 2, height: 2, decoration: "flat") {
+        standardTile("previous", "device.status", width: 1, height: 1, decoration: "flat") {
         	state "previous", label:'', action:"music Player.previousTrack", icon:"st.sonos.previous-btn", backgroundColor:"#ffffff"
         }	
         
-        standardTile("stop", "device.status", width: 2, height: 2, decoration: "flat") {
+        standardTile("stepBack", "device.status", width: 1, height: 1, decoration: "flat") {
+        	state "stepBack", label:'<10', action:"stepBack", icon:"", backgroundColor:"#ffffff"
+        }	
+        
+        standardTile("stop", "device.status", width: 2, height: 1, decoration: "flat") {
             state "default", label:'', action:"music Player.stop", icon:"st.sonos.stop-btn", backgroundColor:"#ffffff"
-            state "grouped", label:'', action:"music Player.stop", icon:"st.sonos.stop-btn", backgroundColor:"#ffffff"
         }
         
-        standardTile("next", "device.status", width: 2, height: 2, decoration: "flat") {
+        standardTile("stepForward", "device.status", width: 1, height: 1, decoration: "flat") {
+        	state "stepForward", label:'>30', action:"stepForward", icon:"", backgroundColor:"#ffffff"
+        }	
+        
+        standardTile("next", "device.status", width: 1, height: 1, decoration: "flat") {
         	state "next", label:'', action:"music Player.nextTrack", icon:"st.sonos.next-btn", backgroundColor:"#ffffff"
         }
         
-        valueTile("playbackType", "device.playbackType", decoration: "flat", width: 2, height: 2) {
+        valueTile("playbackType", "device.playbackType", decoration: "flat", width: 6, height: 1) {
             state "playbackType", label:'Playing: ${currentValue}', defaultState: true
         }
         
-        standardTile("fillerTile", "device.status", width: 2, height: 2, decoration: "flat") {
-        	state "default", label:'', action:"", icon:"", backgroundColor:"#ffffff"
+        standardTile("home", "device.status", width: 2, height: 2, decoration: "flat") {
+            state "default", label:'', action:"home", icon:"st.Home.home2", backgroundColor:"#ffffff"
+        }
+		
+		standardTile("moveUp", "device.status", width: 2, height: 2, decoration: "flat") {
+            state "default", label:'', action:"moveUp", icon:"st.thermostat.thermostat-up", backgroundColor:"#ffffff"
+        }
+		
+		standardTile("music", "device.status", width: 2, height: 2, decoration: "flat") {
+            state "default", label:'music', action:"music", icon:"", backgroundColor:"#ffffff"
         }
         
-        standardTile("scanNewClients", "device.status", width: 2, height: 2, decoration: "flat") {
-            state "default", label:'New Clients', action:"scanNewClients", icon:"st.secondary.refresh", backgroundColor:"#ffffff"
+        standardTile("moveLeft", "device.status", width: 2, height: 2, decoration: "flat") {
+            state "default", label:'', action:"moveLeft", icon:"st.thermostat.thermostat-left", backgroundColor:"#ffffff"
         }
+		
+		standardTile("select", "device.status", width: 2, height: 2, decoration: "flat") {
+            state "default", label:'select', action:"select", icon:"", backgroundColor:"#ffffff"
+        }
+        
+        standardTile("moveRight", "device.status", width: 2, height: 2, decoration: "flat") {
+            state "default", label:'', action:"moveRight", icon:"st.thermostat.thermostat-right", backgroundColor:"#ffffff"
+        }
+		
+		standardTile("back", "device.status", width: 2, height: 2, decoration: "flat") {
+            state "default", label:'back', action:"back", icon:"", backgroundColor:"#ffffff"
+        }
+		
+		standardTile("moveDown", "device.status", width: 2, height: 2, decoration: "flat") {
+            state "default", label:'', action:"moveDown", icon:"st.thermostat.thermostat-down", backgroundColor:"#ffffff"
+        }
+		
+		standardTile("scanNewClients", "device.status", width: 2, height: 2, decoration: "flat") {
+            state "default", label:'New Clients', action:"scanNewClients", icon:"st.secondary.refresh", backgroundColor:"#ffffff"
+        }        
 		
 	main "status"
     }
@@ -141,6 +187,68 @@ def setVolumeLevel(level) {
 	log.debug "Executing 'setVolumeLevel(" + level + ")'"
     sendEvent(name: "level", value: level);
     sendCommand("setVolume." + level);
+}
+
+def stepBack() {
+	log.debug "Executing 'stepBack'"
+
+	setPlaybackTitle("Jumping back 10s");
+	sendCommand("stepBack");
+}
+
+def stepForward() {
+	log.debug "Executing 'stepForward'"
+
+	setPlaybackTitle("Jumping up 30s");
+	sendCommand("stepForward");
+}
+
+def home() {
+	log.debug "Executing 'home'"
+
+	sendCommand("home");
+}
+
+def moveUp() {
+	log.debug "Executing 'moveUp'"
+
+	sendCommand("moveUp");
+}
+
+def music() {
+	log.debug "Executing 'music'"
+
+	sendCommand("music");
+}
+
+def moveLeft() {
+	log.debug "Executing 'moveLeft'"
+
+	sendCommand("moveLeft");
+}
+
+def select() {
+	log.debug "Executing 'select'"
+
+	sendCommand("select");
+}
+
+def moveRight() {
+	log.debug "Executing 'moveRight'"
+
+	sendCommand("moveRight");
+}
+
+def back() {
+	log.debug "Executing 'back'"
+
+	sendCommand("back");
+}
+
+def moveDown() {
+	log.debug "Executing 'moveDown'"
+
+	sendCommand("moveDown");
 }
 
 def sendCommand(command) {
