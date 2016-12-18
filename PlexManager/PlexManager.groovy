@@ -361,7 +361,7 @@ def switchChange(evt) {
         break;
         
         case "previous":
-        	log.debug "Executing 'next'"
+        	log.debug "Executing 'previous'"
 			executeClientRequest("/player/playback/skipPrevious", phtID , "GET");
         break;
         
