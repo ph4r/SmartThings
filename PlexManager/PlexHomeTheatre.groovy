@@ -34,6 +34,7 @@ metadata {
         command "setPlaybackIcon", ["string"]
         command "setPlaybackTitle", ["string"]
         command "setVolumeLevel", ["number"]        
+	command "playbackType", ["string"]
 	}
 
 	simulator {
@@ -57,30 +58,32 @@ metadata {
             }
         }
         
-        standardTile("next", "device.status", width: 2, height: 2, decoration: "flat") {
-        	state "next", label:'', action:"music Player.nextTrack", icon:"st.sonos.next-btn", backgroundColor:"#ffffff"
-        }
-        
         standardTile("previous", "device.status", width: 2, height: 2, decoration: "flat") {
         	state "previous", label:'', action:"music Player.previousTrack", icon:"st.sonos.previous-btn", backgroundColor:"#ffffff"
         }	
-        
-        standardTile("fillerTile", "device.status", width: 5, height: 1, decoration: "flat") {
-        	state "default", label:'', action:"", icon:"", backgroundColor:"#ffffff"
-        }
         
         standardTile("stop", "device.status", width: 2, height: 2, decoration: "flat") {
             state "default", label:'', action:"music Player.stop", icon:"st.sonos.stop-btn", backgroundColor:"#ffffff"
             state "grouped", label:'', action:"music Player.stop", icon:"st.sonos.stop-btn", backgroundColor:"#ffffff"
         }
         
-        standardTile("scanNewClients", "device.status", width: 5, height: 1, decoration: "flat") {
-            state "default", label:'Scan New Clients', action:"scanNewClients", icon:"state.icon", backgroundColor:"#ffffff"
-            state "grouped", label:'', action:"scanNewClients", icon:"state.icon", backgroundColor:"#ffffff"
+        standardTile("next", "device.status", width: 2, height: 2, decoration: "flat") {
+        	state "next", label:'', action:"music Player.nextTrack", icon:"st.sonos.next-btn", backgroundColor:"#ffffff"
         }
         
-        main "status"
-        details (["status", "previous", "stop", "next", "currentSong"])
+        valueTile("playbackType", "device.playbackType", decoration: "flat", width: 2, height: 2) {
+            state "playbackType", label:'Playing: ${currentValue}', defaultState: true
+        }
+        
+        standardTile("fillerTile", "device.status", width: 2, height: 2, decoration: "flat") {
+        	state "default", label:'', action:"", icon:"", backgroundColor:"#ffffff"
+        }
+        
+        standardTile("scanNewClients", "device.status", width: 2, height: 2, decoration: "flat") {
+            state "default", label:'New Clients', action:"scanNewClients", icon:"st.secondary.refresh", backgroundColor:"#ffffff"
+        }
+		
+	main "status"
     }
 }
 
