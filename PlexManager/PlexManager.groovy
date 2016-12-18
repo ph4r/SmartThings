@@ -356,33 +356,88 @@ def switchChange(evt) {
     
     switch(command) {
     	case "next":
-        	log.debug "Sending command 'next' to $phtIP"
-            next(phtID);
+        	log.debug "Executing 'next'"
+			executeClientRequest("/player/playback/skipNext", phtID , "GET");
         break;
         
         case "previous":
-        	log.debug "Sending command 'previous' to $phtIP"
-            previous(phtID);
+        	log.debug "Executing 'next'"
+			executeClientRequest("/player/playback/skipPrevious", phtID , "GET");
         break;
         
         case "play":
-        	play(phtID);
+			log.debug "Executing 'play'"
+			executeClientRequest("/player/playback/play", phtID , "GET"); 
         break;
         
         case "pause":
-        	pauseplayback(phtID);
+			log.debug "Executing 'pause'"
+			executeClientRequest("/player/playback/pause", phtID , "GET"); 
         break;
             
-        case "stop":            
-    		stop(phtID);
+        case "stop": 
+			log.debug "Executing 'stop'"
+			executeClientRequest("/player/playback/stop", phtID , "GET"); 
         break;
         
         case "scanNewClients":
         	getClients();
+        break;
             
         case "setVolume":
         	setVolume(phtID, getPHTAttribute(evt.value));
         break;
+            
+        case "stepBack": 
+			log.debug "Executing 'stepBack'"
+			executeClientRequest("/player/playback/stepBack", phtID , "GET"); 
+        break;
+            
+        case "stepForward": 
+			log.debug "Executing 'stepForward'"
+			executeClientRequest("/player/playback/stepForward", phtID , "GET"); 
+        break;
+            
+        case "moveLeft": 
+			log.debug "Executing 'moveLeft'"
+			executeClientRequest("/player/navigation/moveLeft", phtID , "GET"); 
+        break;
+            
+        case "moveRight": 
+			log.debug "Executing 'moveRight'"
+			executeClientRequest("/player/navigation/moveRight", phtID , "GET"); 
+        break;
+            
+        case "moveDown": 
+			log.debug "Executing 'moveDown'"
+			executeClientRequest("/player/navigation/moveDown", phtID , "GET"); 
+        break;
+            
+        case "moveUp": 
+			log.debug "Executing 'moveUp'"
+			executeClientRequest("/player/navigation/moveUp", phtID , "GET"); 
+        break;
+            
+        case "select": 
+			log.debug "Executing 'select'"
+			executeClientRequest("/player/navigation/select", phtID , "GET"); 
+        break;
+            
+        case "back": 
+			log.debug "Executing 'moveRight'"
+			executeClientRequest("/player/navigation/back", phtID , "GET"); 
+        break;
+            
+        case "home": 
+			log.debug "Executing 'home'"
+			executeClientRequest("/player/navigation/home", phtID , "GET"); 
+        break;
+            
+        case "music": 
+			log.debug "Executing 'music'"
+			executeClientRequest("/player/navigation/music", phtID , "GET"); 
+        break;
+		
     }
     
     return;
@@ -414,36 +469,6 @@ def updateClientStatus(){
 	log.debug "Executing 'updateClientStatus'"
     
 	executeRequest("/status/sessions", "GET")
-}
-
-def play(phtID) {
-	log.debug "Executing 'play'"
-	
-	executeClientRequest("/player/playback/play", phtID , "GET");
-}
-
-def pauseplayback(phtID) {
-	log.debug "Executing 'pause'"
-	
-	executeClientRequest("/player/playback/pause", phtID , "GET");
-}
-
-def stop(phtID) {
-	log.debug "Executing 'stop'"
-	
-	executeClientRequest("/player/playback/stop", phtID , "GET");
-}
-
-def next(phtID) {
-	log.debug "Executing 'next'"
-	
-	executeClientRequest("/player/playback/skipNext", phtID , "GET");
-}
-
-def previous(phtID) {
-	log.debug "Executing 'next'"
-	
-	executeClientRequest("/player/playback/skipPrevious", phtID , "GET");
 }
 
 def executeClientRequest(Path, phtID, method) {
