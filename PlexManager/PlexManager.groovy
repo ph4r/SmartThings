@@ -60,15 +60,14 @@ def authPage() {
 
 def clientPage() {
 	if (!state.authenticationToken) { getAuthenticationToken() }
-    
 	def showUninstall = state.appInstalled
     def devs = getClientList()
-    //log.debug "devs: ${devs}"
 	return dynamicPage(name: "clientPage", uninstall: true, install: true) {
 		section("Client Selection Page") {
-        	paragraph("Devices with [status] on the end only provide status reporting and not control of the Plex Client via the ST App")
-			input "selectedClients", "enum", title: "Select Your Clients...", options: devs, multiple: true, required: false, submitOnChange: true
+        	input "selectedClients", "enum", title: "Select Your Clients...", options: devs, multiple: true, required: false, submitOnChange: true
             href "authPage", title:"Go Back to Auth Page", description: "Tap to edit..."
+	    	input "pollEnable", "bool", title: "Enable Polling", defaultValue: "true", submitOnChange: true
+            input "showAllDevs", "bool", title: "Show All Devices Regardless of Capability", defaultValue: "false", submitOnChange: true
   		}
     }
 }
@@ -78,7 +77,7 @@ def clientListOpt() {
 }
 
 def getClientList() {
-	def devs = []
+	def devs = [:]
 	log.debug "Executing 'getClientList'"
     
     def params = [
@@ -88,30 +87,66 @@ def getClientList() {
 			  'X-Plex-Token': state.authenticationToken
 		]
 	]
-    httpGet(params) { resp ->
+	// GET 3rd level IP of Plex server
+	def plexServerIPShort = settings.plexServerIP.substring(0 , plexServerIP.lastIndexOf("."))
+	
+	httpGet(params) { resp ->
         log.debug "Parsing plex.tv/devices.xml"
         def devices = resp.data.Device
-        devices.each { thing ->    
-        	thing.@provides.text().tokenize(',').each { provider ->
-            	if(provider == "player") {                
-                	thing.Connection.each { con ->
-                        def uri = con.@uri.text()
-                        def address = (uri =~ 'https?://([^:]+)')[0][1]                                           
-                		devs << ["${thing.@name.text()}|${thing.@clientIdentifier.text()}|${address}":"${thing.@name.text()}"]
+        
+        def deviceNames = []
+        devices.each { thing ->
+        
+        	def capabilities = thing.@provides.text()
+            
+            // If these capabilities
+        	if(capabilities.contains("player")||capabilities.contains("client")||settings.showAllDevs){ 
+                     	
+                 //Define name based on name unless blank then use device name
+                 def whatToCallMe = "${thing.@name.text()}"
+                 if("${thing.@name.text()}"==""){whatToCallMe = "${thing.@device.text()}"}
+                 
+                 // Create alternative name if same name   
+                 def tempName = whatToCallMe
+        	     for (int i = 2; i < 100; i++) {
+                  	if(deviceNames.contains(tempName)){
+                  		tempName = "${whatToCallMe} #$i"
+                    }else{
+                      	whatToCallMe = tempName
+    	                break
+	                }
+                }
+                    
+                deviceNames << whatToCallMe
+                         
+                def addressVal = "0.0.0.0"
+                def portVal = "0"
+                def listName = whatToCallMe
+                    
+                // Get IP Address for those with an IP in the same range as your Plex Server if connection IP available (will only return a single entry for the local device)
+            	thing.Connection.each { con ->
+                    
+                    def uri = con.@uri.text()
+                    def address = (uri =~ 'https?://([^:]+)')[0][1]
+                    def port = uri.split(":")[2].replaceAll("/","")
+                        
+                    //Check if IP on same range
+                    if(plexServerIPShort == address.substring(0 , address.lastIndexOf("."))){
+                    	addressVal = address
+                        portVal = port
                 	}
                 }
-            }
-            
-            if(thing.@device.text() == "Xbox One") {
-            	devs << ["${thing.@name.text()}[status]|${thing.@clientIdentifier.text()}|0.0.0.0":"${thing.@name.text()}[status]"]
-            }
-            
-            if(thing.@provides.text() == "client") {
-            	devs << ["${thing.@device.text()}[status]|${thing.@clientIdentifier.text()}|0.0.0.0":"${thing.@device.text()}[status]"]
-            }
-        }
+                 
+                
+                // Add to list
+                if(devs.findIndexValues { it =~ /${thing.@clientIdentifier.text()}/ } == []){
+                	if(portVal == "0"){ listName = listName + "*" }
+                	devs << ["${whatToCallMe}|${thing.@clientIdentifier.text()}|${addressVal}|${portVal}": "$listName"]
+            	} 
+        	}
+    	}   
     }
-    return devs.sort()
+    return devs.sort { a, b -> a.value.toLowerCase() <=> b.value.toLowerCase() }
 }
 
 def installed() {
@@ -143,10 +178,7 @@ def updated() {
         }
     }
 
-    //state.authenticationToken = null;
-    //state.tokenUserName = null;
     state.poll = false;
-    //getClients();
     
     if (!state.authenticationToken) {
     	getAuthenticationToken()
@@ -161,9 +193,8 @@ def updated() {
 }
 
 def uninstalled() {
-	//unsubscribe()
 	state.poll = false;
-    //removeChildDevices(getChildDevices())
+    removeChildDevices(getChildDevices())
 }
 
 private removeChildDevices(delete) {
@@ -196,6 +227,7 @@ log.trace "in response(evt)";
             
             // Look at all the current content playing, and determine if anything is playing on this device
             def currentPlayback = mediaContainer.Video.find { d -> d.Player.@machineIdentifier.text() == identifier }
+			if(!currentPlayback) currentPlayback = mediaContainer.Video.find { d -> d.Player.@address.text() == address }
             
             // If there is no content playing on this device, then the state is stopped
             def playbackState = "stopped";            
@@ -371,8 +403,11 @@ def regularPolling() {
     if(state.authenticationToken) {
         updateClientStatus();
     }
-    
-    runIn(10, regularPolling);
+    unschedule()
+	
+    if(pollEnable){
+    	runIn(10, regularPolling);
+    }
 }
 
 def updateClientStatus(){
