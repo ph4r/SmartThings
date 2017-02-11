@@ -287,7 +287,7 @@ mappings {
 def plexWebHookHandler() {	 
 	def jsonSlurper = new groovy.json.JsonSlurper()
 	def plexJSON = jsonSlurper.parseText(params.payload)
-    //log.debug "WebHooks: ${plexJSON}"
+    //log.debug "WebHooks data\nServer ${plexJSON.Server}\nPlayer: ${plexJSON.Player}\nFull: ${plexJSON}"
     
     def command = ""
     def playerID = plexJSON.Player.uuid
@@ -302,7 +302,7 @@ def plexWebHookHandler() {
     def children = getChildDevices()
     def pht = children.find{ d -> d.deviceNetworkId.contains(playerID) }
     def timelineStatus = "Subscribe" 
-    if (pht?.settings.TimelineStatus.toString() != "") {
+    if (pht?.settings?.TimelineStatus.toString() != "") {
         timelineStatus = pht.settings.TimelineStatus.toString()
     }
     if (timelineStatus != "None") { return }        
@@ -310,7 +310,8 @@ def plexWebHookHandler() {
     pht.playbackType(mediaType);
     pht.setPlaybackTitle(plexJSON.Metadata.title);
 
-    def playingTime		= plexJSON.Metadata.viewOffset.toLong();
+    def playingTime		= 0L
+    if (plexJSON.Metadata?.viewOffset) {playingTime = plexJSON.Metadata?.viewOffset.toLong();}
     def playingDuration	= playingTime.toLong();
     if (plexJSON.Metadata?.duration) {playingDuration = plexJSON.Metadata?.duration.toLong();}
     def playingPosition = (( playingTime / playingDuration ) * 100).toLong()
@@ -323,10 +324,10 @@ def plexWebHookHandler() {
 
 def response(evt) {	 
 
-log.trace "in response(evt)";
     def msg = parseLanMessage(evt.description);
-    if (msg && msg?.body && msg?.body.contains("HTTPError")) { log.debug msg }
-    if (msg && msg?.body && msg.body.contains("<Media") && !msg.body.contains("HTTPError")){
+    if (msg?.body && msg?.body.contains("HTTPError")) { log.debug msg }
+    //if (msg && msg?.body) { log.debug msg } // For true debugging only
+    if (msg?.body && msg.body.contains("<Media") && !msg.body.contains("HTTPError")){
     	
     	def mediaContainer = new XmlSlurper().parseText(msg.body)
         
@@ -702,7 +703,7 @@ def initiateClientRequest() {
     getChildDevices().each { pht ->
 	
     	def timelineStatus = "Subscribe" 
-        if (pht?.settings.TimelineStatus.toString() != "") {
+        if (pht?.settings?.TimelineStatus && pht?.settings?.TimelineStatus.toString() != "") {
             timelineStatus = pht.settings.TimelineStatus.toString()
         }
         log.trace "Initiating ${pht.deviceNetworkId} with $timelineStatus"
@@ -756,7 +757,7 @@ def initiateClientRequest() {
 
         try {    
             def actualAction = new physicalgraph.device.HubAction(
-                method: method,
+                method: "GET",
                 path: pathToSend,
                 headers: headers)
 
