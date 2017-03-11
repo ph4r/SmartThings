@@ -29,7 +29,9 @@
 metadata {
 	definition (name: "Plex Home Theatre", namespace: "ibeech", author: "ibeech") {
     	capability "Switch"
-		capability "musicPlayer"
+	capability "musicPlayer"
+	capability "Sensor"
+	capability "Actuator"
         
         command "scanNewClients"
         command "setPlaybackIcon", ["string"]
