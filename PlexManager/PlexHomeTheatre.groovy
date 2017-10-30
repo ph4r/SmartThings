@@ -63,9 +63,9 @@ metadata {
         
         multiAttributeTile(name:"status", type: "generic", width: 6, height: 4, canChangeIcon: true){
             tileAttribute ("device.status", key: "PRIMARY_CONTROL") {
-            attributeState "playing", label:'Playing', action:"music Player.pause", icon:"st.Electronics.electronics16", nextState:"paused", backgroundColor:"#79b821"
+            attributeState "playing", label:'Playing', action:"music Player.pause", icon:"st.Electronics.electronics16", nextState:"paused", backgroundColor:"#00a0dc"
             attributeState "stopped", label:'Stopped', action:"music Player.play", icon:"st.Electronics.electronics16", backgroundColor:"#ffffff"
-            attributeState "paused", label:'Paused', action:"music Player.play", icon:"st.Electronics.electronics16", nextState:"playing", backgroundColor:"#FFA500"
+            attributeState "paused", label:'Paused', action:"music Player.play", icon:"st.Electronics.electronics16", nextState:"playing", backgroundColor:"#e86d13"
         }        
             tileAttribute ("device.trackDescription", key: "SECONDARY_CONTROL") {
                 attributeState "trackDescription", label:'${currentValue}'
